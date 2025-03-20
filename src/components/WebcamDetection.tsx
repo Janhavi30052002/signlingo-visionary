@@ -42,8 +42,8 @@ const WebcamDetection = () => {
       // In a production app, you'd use a model fine-tuned on sign language
       const imageClassifier = await pipeline(
         'image-classification',
-        'Xenova/vit-base-patch16-224', // This is a general image classifier
-        { quantized: true }
+        'Xenova/vit-base-patch16-224' // This is a general image classifier
+        // Remove the quantized property as it's not supported in the type definition
       );
       
       setClassifier(imageClassifier);
