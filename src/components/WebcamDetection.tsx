@@ -2,6 +2,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useInView } from '@/hooks/useInView';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 const WebcamDetection = () => {
   const [isWebcamActive, setIsWebcamActive] = useState(false);
@@ -12,7 +14,8 @@ const WebcamDetection = () => {
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [containerRef, isInView] = useInView({ triggerOnce: true });
+  const [containerRef, isInView] = useInView<HTMLDivElement>({ triggerOnce: true });
+  const detectionIntervalRef = useRef<number | null>(null);
 
   const startWebcam = async () => {
     setIsLoading(true);
@@ -26,13 +29,15 @@ const WebcamDetection = () => {
         await videoRef.current.play();
         setIsWebcamActive(true);
         setIsPermissionDenied(false);
+        toast.success("Camera started successfully!");
         
         // For demo purposes, simulate detection after a delay
-        simulateDetection();
+        startDetection();
       }
     } catch (error) {
       console.error('Error accessing webcam:', error);
       setIsPermissionDenied(true);
+      toast.error("Camera access was denied. Please check your permissions.");
     } finally {
       setIsLoading(false);
     }
@@ -47,16 +52,21 @@ const WebcamDetection = () => {
       setIsWebcamActive(false);
       setDetectedSign('');
       setConfidence(0);
+      stopDetection();
+      toast.info("Camera stopped");
     }
   };
 
-  const simulateDetection = () => {
+  const startDetection = () => {
+    // Clear any existing interval
+    stopDetection();
+    
     // This is just for demo purposes - in a real app, you'd process video frames
     const signs = ['Hello', 'Thank You', 'Please', 'Yes', 'No', 'Help'];
     
-    const interval = setInterval(() => {
+    const interval = window.setInterval(() => {
       if (!isWebcamActive) {
-        clearInterval(interval);
+        stopDetection();
         return;
       }
       
@@ -68,13 +78,21 @@ const WebcamDetection = () => {
       setConfidence(randomConfidence);
     }, 3000);
     
-    return () => clearInterval(interval);
+    detectionIntervalRef.current = interval;
   };
 
-  // Clean up webcam on unmount
+  const stopDetection = () => {
+    if (detectionIntervalRef.current !== null) {
+      window.clearInterval(detectionIntervalRef.current);
+      detectionIntervalRef.current = null;
+    }
+  };
+
+  // Clean up webcam and intervals on unmount
   useEffect(() => {
     return () => {
       stopWebcam();
+      stopDetection();
     };
   }, []);
 
@@ -100,12 +118,12 @@ const WebcamDetection = () => {
                   ? "Please allow camera access to use this feature"
                   : "Our system will detect and interpret Indian Sign Language in real-time"}
               </p>
-              <button
+              <Button
                 onClick={startWebcam}
-                className="px-6 py-3 bg-primary text-white rounded-full font-medium shadow-button transition-all duration-300 hover:shadow-lg hover:scale-[1.03] active:scale-[0.98] focus-ring"
+                className="px-6 py-3 bg-primary text-white rounded-full font-medium shadow-button transition-all duration-300 hover:shadow-lg hover:scale-[1.03] active:scale-[0.98]"
               >
                 Start Camera
-              </button>
+              </Button>
             </div>
           )}
           
@@ -132,16 +150,18 @@ const WebcamDetection = () => {
           
           {isWebcamActive && (
             <div className="absolute top-4 right-4 flex space-x-2">
-              <button
+              <Button
                 onClick={stopWebcam}
-                className="p-2 bg-red-500 text-white rounded-full shadow-lg hover:bg-red-600 transition-colors"
+                variant="destructive"
+                size="icon"
+                className="rounded-full shadow-lg"
                 aria-label="Stop webcam"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="18" y1="6" x2="6" y2="18"></line>
                   <line x1="6" y1="6" x2="18" y2="18"></line>
                 </svg>
-              </button>
+              </Button>
             </div>
           )}
         </div>

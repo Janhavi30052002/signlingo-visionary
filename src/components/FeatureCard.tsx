@@ -16,7 +16,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
   icon, 
   index
 }) => {
-  const [ref, isInView] = useInView({ triggerOnce: true });
+  const [ref, isInView] = useInView<HTMLDivElement>({ triggerOnce: true });
   
   return (
     <div 
