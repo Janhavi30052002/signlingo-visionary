@@ -1,4 +1,3 @@
-
 import React from 'react';
 import WebcamDetection from '@/components/WebcamDetection';
 import { useInView } from '@/hooks/useInView';
@@ -24,7 +23,7 @@ const Demo = () => {
             Experience Indian Sign Language Detection
           </h1>
           <p className="text-lg text-muted-foreground mb-8">
-            Try our real-time detection system by enabling your webcam. Our AI will recognize and translate Indian Sign Language gestures instantly.
+            Upload images of Indian Sign Language gestures and let our AI recognize and translate them instantly.
           </p>
         </div>
       </section>
@@ -39,32 +38,27 @@ const Demo = () => {
               <div className="space-y-2">
                 <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary mx-auto mb-4">
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <polyline points="12 6 12 12 16 14"></polyline>
+                    <path d="M14.5 4h-5L7 7H4a2 2 0 00-2 2v9a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2h-3l-2.5-3z"></path>
+                    <circle cx="12" cy="13" r="3"></circle>
                   </svg>
                 </div>
                 <h3 className="font-medium text-center">Step 1</h3>
                 <p className="text-sm text-center text-muted-foreground">
-                  Click the "Start Camera" button to enable your webcam.
+                  Upload an image of an Indian Sign Language gesture.
                 </p>
               </div>
               
               <div className="space-y-2">
                 <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary mx-auto mb-4">
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M7 2v2"></path>
-                    <path d="M11 2v2"></path>
-                    <path d="M15 2v2"></path>
-                    <path d="M17 8c-.4 2.4-2.2 4.4-5 4.4S5.6 10.4 5.2 8"></path>
-                    <circle cx="9" cy="18" r="2"></circle>
-                    <circle cx="15" cy="18" r="2"></circle>
-                    <path d="M15 13v3"></path>
-                    <path d="M9 13v3"></path>
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M12 16v-4"></path>
+                    <path d="M12 8h.01"></path>
                   </svg>
                 </div>
                 <h3 className="font-medium text-center">Step 2</h3>
                 <p className="text-sm text-center text-muted-foreground">
-                  Perform Indian Sign Language gestures within the camera view.
+                  Click the "Analyze Sign" button to process the image.
                 </p>
               </div>
               
@@ -80,7 +74,7 @@ const Demo = () => {
                 </div>
                 <h3 className="font-medium text-center">Step 3</h3>
                 <p className="text-sm text-center text-muted-foreground">
-                  View the real-time detection results and translations below the video.
+                  View the detection results and translations below the image.
                 </p>
               </div>
             </div>

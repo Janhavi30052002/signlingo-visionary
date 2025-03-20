@@ -1,100 +1,71 @@
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useInView } from '@/hooks/useInView';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 
 const WebcamDetection = () => {
-  const [isWebcamActive, setIsWebcamActive] = useState(false);
-  const [isPermissionDenied, setIsPermissionDenied] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [detectedSign, setDetectedSign] = useState('');
   const [confidence, setConfidence] = useState(0);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [containerRef, isInView] = useInView<HTMLDivElement>({ triggerOnce: true });
-  const detectionIntervalRef = useRef<number | null>(null);
 
-  const startWebcam = async () => {
-    setIsLoading(true);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'user', width: 640, height: 480 }
-      });
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-        setIsWebcamActive(true);
-        setIsPermissionDenied(false);
-        toast.success("Camera started successfully!");
-        
-        // For demo purposes, simulate detection after a delay
-        startDetection();
-      }
-    } catch (error) {
-      console.error('Error accessing webcam:', error);
-      setIsPermissionDenied(true);
-      toast.error("Camera access was denied. Please check your permissions.");
-    } finally {
-      setIsLoading(false);
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file');
+      return;
     }
-  };
 
-  const stopWebcam = () => {
-    if (videoRef.current && videoRef.current.srcObject) {
-      const stream = videoRef.current.srcObject as MediaStream;
-      const tracks = stream.getTracks();
-      tracks.forEach(track => track.stop());
-      videoRef.current.srcObject = null;
-      setIsWebcamActive(false);
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setImagePreview(e.target?.result as string);
       setDetectedSign('');
       setConfidence(0);
-      stopDetection();
-      toast.info("Camera stopped");
-    }
+    };
+    reader.readAsDataURL(file);
   };
 
-  const startDetection = () => {
-    // Clear any existing interval
-    stopDetection();
+  const analyzeImage = () => {
+    if (!imagePreview) {
+      toast.error('Please upload an image first');
+      return;
+    }
+
+    setIsLoading(true);
     
-    // This is just for demo purposes - in a real app, you'd process video frames
-    const signs = ['Hello', 'Thank You', 'Please', 'Yes', 'No', 'Help'];
-    
-    const interval = window.setInterval(() => {
-      if (!isWebcamActive) {
-        stopDetection();
-        return;
-      }
-      
-      // Randomly choose a sign and confidence level for demo
+    // Simulate analysis - in a real app, this would call your ML model
+    setTimeout(() => {
+      const signs = ['Hello', 'Thank You', 'Please', 'Yes', 'No', 'Help'];
       const randomSign = signs[Math.floor(Math.random() * signs.length)];
       const randomConfidence = 0.7 + Math.random() * 0.29; // Between 70% and 99%
       
       setDetectedSign(randomSign);
       setConfidence(randomConfidence);
-    }, 3000);
-    
-    detectionIntervalRef.current = interval;
+      setIsLoading(false);
+      
+      toast.success('Image analyzed successfully!');
+    }, 2000);
   };
 
-  const stopDetection = () => {
-    if (detectionIntervalRef.current !== null) {
-      window.clearInterval(detectionIntervalRef.current);
-      detectionIntervalRef.current = null;
+  const resetImage = () => {
+    setImagePreview(null);
+    setDetectedSign('');
+    setConfidence(0);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
+    toast.info('Image removed');
   };
-
-  // Clean up webcam and intervals on unmount
-  useEffect(() => {
-    return () => {
-      stopWebcam();
-      stopDetection();
-    };
-  }, []);
 
   return (
     <div 
@@ -106,91 +77,96 @@ const WebcamDetection = () => {
     >
       <div className="glass border border-white/20 rounded-2xl overflow-hidden shadow-lg">
         <div className="relative aspect-video bg-black/20">
-          {!isWebcamActive && !isLoading && (
+          {!imagePreview && (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
               <h3 className="text-2xl font-medium mb-4">
-                {isPermissionDenied
-                  ? "Camera access was denied"
-                  : "Enable your webcam to try sign language detection"}
+                Upload an image for Indian Sign Language detection
               </h3>
               <p className="text-muted-foreground mb-6 max-w-md">
-                {isPermissionDenied
-                  ? "Please allow camera access to use this feature"
-                  : "Our system will detect and interpret Indian Sign Language in real-time"}
+                Our system will analyze and interpret Indian Sign Language from your uploaded image
               </p>
-              <Button
-                onClick={startWebcam}
-                className="px-6 py-3 bg-primary text-white rounded-full font-medium shadow-button transition-all duration-300 hover:shadow-lg hover:scale-[1.03] active:scale-[0.98]"
-              >
-                Start Camera
-              </Button>
+              <Input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileUpload}
+                className="max-w-xs mb-4"
+              />
             </div>
           )}
           
           {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-10">
               <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
             </div>
           )}
           
-          <video
-            ref={videoRef}
-            className={cn(
-              "w-full h-full object-cover transition-opacity duration-300",
-              isWebcamActive ? "opacity-100" : "opacity-0"
-            )}
-            playsInline
-            muted
-          />
-          
-          <canvas 
-            ref={canvasRef} 
-            className="absolute top-0 left-0 w-full h-full pointer-events-none" 
-          />
-          
-          {isWebcamActive && (
-            <div className="absolute top-4 right-4 flex space-x-2">
-              <Button
-                onClick={stopWebcam}
-                variant="destructive"
-                size="icon"
-                className="rounded-full shadow-lg"
-                aria-label="Stop webcam"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </Button>
-            </div>
+          {imagePreview && (
+            <>
+              <img 
+                src={imagePreview} 
+                className="w-full h-full object-contain"
+                alt="Uploaded sign language"
+              />
+              <div className="absolute top-4 right-4 flex space-x-2">
+                <Button
+                  onClick={resetImage}
+                  variant="destructive"
+                  size="icon"
+                  className="rounded-full shadow-lg"
+                  aria-label="Remove image"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </Button>
+              </div>
+            </>
           )}
         </div>
         
-        {isWebcamActive && (
-          <div className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm text-muted-foreground">Detected Sign</div>
-                <div className="text-2xl font-medium">
-                  {detectedSign || "Waiting for signs..."}
+        <div className="p-6">
+          {imagePreview ? (
+            <>
+              {detectedSign ? (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm text-muted-foreground">Detected Sign</div>
+                    <div className="text-2xl font-medium">{detectedSign}</div>
+                  </div>
+                  
+                  {confidence > 0 && (
+                    <div className="glass px-4 py-2 rounded-full text-sm">
+                      Confidence: {(confidence * 100).toFixed(0)}%
+                    </div>
+                  )}
                 </div>
-              </div>
-              
-              {confidence > 0 && (
-                <div className="glass px-4 py-2 rounded-full text-sm">
-                  Confidence: {(confidence * 100).toFixed(0)}%
+              ) : (
+                <div className="flex justify-center">
+                  <Button 
+                    onClick={analyzeImage} 
+                    className="px-6 py-5 bg-primary text-white rounded-full font-medium shadow-button transition-all duration-300 hover:shadow-lg hover:scale-[1.03] active:scale-[0.98]"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Analyzing..." : "Analyze Sign"}
+                  </Button>
                 </div>
               )}
+              
+              {detectedSign && (
+                <div className="mt-4 pt-4 border-t border-border">
+                  <div className="text-sm text-muted-foreground mb-2">Translation</div>
+                  <p>{detectedSign}</p>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="text-center text-muted-foreground">
+              Upload an image to analyze
             </div>
-            
-            {detectedSign && (
-              <div className="mt-4 pt-4 border-t border-border">
-                <div className="text-sm text-muted-foreground mb-2">Translation</div>
-                <p>{detectedSign}</p>
-              </div>
-            )}
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
